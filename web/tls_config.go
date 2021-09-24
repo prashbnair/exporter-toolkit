@@ -98,16 +98,19 @@ func ConfigToTLSConfig(c *TLSStruct, logger log.Logger) (*tls.Config, error) {
 	}
 
 	if c.TLSCertPath == "" {
+		level.Info(logger).Log("missing cert_file")
 		return nil, errors.New("missing cert_file")
 	}
 
 	if c.TLSKeyPath == "" {
+		level.Info(logger).Log("missing key_file")
 		return nil, errors.New("missing key_file")
 	}
 
 	loadCert := func() (*tls.Certificate, error) {
 		cert, err := tls.LoadX509KeyPair(c.TLSCertPath, c.TLSKeyPath)
 		if err != nil {
+			level.Info(logger).Log("failed to load X509KeyPair")
 			return nil, errors.Wrap(err, "failed to load X509KeyPair")
 		}
 		return &cert, nil
