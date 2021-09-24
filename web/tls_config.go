@@ -80,16 +80,19 @@ func getConfig(configPath string) (*Config, error) {
 	return c, err
 }
 
-func getTLSConfig(configPath string) (*tls.Config, error) {
+func getTLSConfig(configPath string, logger log.Logger) (*tls.Config, error) {
 	c, err := getConfig(configPath)
 	if err != nil {
 		return nil, err
 	}
-	return ConfigToTLSConfig(&c.TLSConfig)
+	return ConfigToTLSConfig(&c.TLSConfig, logger)
 }
 
 // ConfigToTLSConfig generates the golang tls.Config from the TLSStruct config.
-func ConfigToTLSConfig(c *TLSStruct) (*tls.Config, error) {
+func ConfigToTLSConfig(c *TLSStruct, logger log.Logger) (*tls.Config, error) {
+	level.Info(logger).Log("printing tls cert path", c.TLSCertPath)
+	level.Info(logger).Log("printing tls key path", c.TLSKeyPath)
+
 	if c.TLSCertPath == "" && c.TLSKeyPath == "" && c.ClientAuth == "" && c.ClientCAs == "" {
 		return nil, errNoTLSConfig
 	}
@@ -187,6 +190,7 @@ func ListenAndServe(server *http.Server, tlsConfigPath string, logger log.Logger
 // Server starts the server on the given listener. Based on the file
 // tlsConfigPath, TLS or basic auth could be enabled.
 func Serve(l net.Listener, server *http.Server, tlsConfigPath string, logger log.Logger) error {
+	level.Info(logger).Log("printing tls config path", tlsConfigPath)
 	if tlsConfigPath == "" {
 		level.Info(logger).Log("msg", "TLS is disabled.", "http2", false)
 		return server.Serve(l)
@@ -214,7 +218,7 @@ func Serve(l net.Listener, server *http.Server, tlsConfigPath string, logger log
 		cache:         newCache(),
 	}
 
-	config, err := ConfigToTLSConfig(&c.TLSConfig)
+	config, err := ConfigToTLSConfig(&c.TLSConfig, logger)
 	switch err {
 	case nil:
 		if !c.HTTPConfig.HTTP2 {
@@ -236,7 +240,7 @@ func Serve(l net.Listener, server *http.Server, tlsConfigPath string, logger log
 	// Set the GetConfigForClient method of the HTTPS server so that the config
 	// and certs are reloaded on new connections.
 	server.TLSConfig.GetConfigForClient = func(*tls.ClientHelloInfo) (*tls.Config, error) {
-		return getTLSConfig(tlsConfigPath)
+		return getTLSConfig(tlsConfigPath, logger)
 	}
 	return server.ServeTLS(l, "", "")
 }
@@ -253,7 +257,7 @@ func Validate(tlsConfigPath string) error {
 	if err != nil {
 		return err
 	}
-	_, err = ConfigToTLSConfig(&c.TLSConfig)
+	_, err = ConfigToTLSConfig(&c.TLSConfig, nil)
 	if err == errNoTLSConfig {
 		return nil
 	}
