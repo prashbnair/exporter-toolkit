@@ -94,6 +94,7 @@ func ConfigToTLSConfig(c *TLSStruct, logger log.Logger) (*tls.Config, error) {
 	level.Info(logger).Log("printing tls key path", c.TLSKeyPath)
 
 	if c.TLSCertPath == "" && c.TLSKeyPath == "" && c.ClientAuth == "" && c.ClientCAs == "" {
+		level.Info(logger).Log("all strings are empty")
 		return nil, errNoTLSConfig
 	}
 
@@ -231,6 +232,7 @@ func Serve(l net.Listener, server *http.Server, tlsConfigPath string, logger log
 		level.Info(logger).Log("msg", "TLS is enabled.", "http2", c.HTTPConfig.HTTP2)
 	case errNoTLSConfig:
 		// No TLS config, back to plain HTTP.
+		level.Info(logger).Log("No TLS Config, going to normal mode")
 		level.Info(logger).Log("msg", "TLS is disabled.", "http2", false)
 		return server.Serve(l)
 	default:
