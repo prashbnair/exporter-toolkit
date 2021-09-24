@@ -97,17 +97,19 @@ func ConfigToTLSConfig(c *TLSStruct, logger log.Logger) (*tls.Config, error) {
 		level.Info(logger).Log("all strings are empty")
 		return nil, errNoTLSConfig
 	}
-
+	level.Info(logger).Log("passed 1")
 	if c.TLSCertPath == "" {
 		level.Info(logger).Log("missing cert_file")
 		return nil, errors.New("missing cert_file")
 	}
+	level.Info(logger).Log("passed 2")
 
 	if c.TLSKeyPath == "" {
 		level.Info(logger).Log("missing key_file")
 		return nil, errors.New("missing key_file")
 	}
 
+	level.Info(logger).Log("passed 3")
 	loadCert := func() (*tls.Certificate, error) {
 		cert, err := tls.LoadX509KeyPair(c.TLSCertPath, c.TLSKeyPath)
 		if err != nil {
@@ -121,6 +123,8 @@ func ConfigToTLSConfig(c *TLSStruct, logger log.Logger) (*tls.Config, error) {
 	if _, err := loadCert(); err != nil {
 		return nil, err
 	}
+
+	level.Info(logger).Log("passed 4")
 
 	cfg := &tls.Config{
 		MinVersion:               (uint16)(c.MinVersion),
@@ -139,7 +143,7 @@ func ConfigToTLSConfig(c *TLSStruct, logger log.Logger) (*tls.Config, error) {
 	if len(cf) > 0 {
 		cfg.CipherSuites = cf
 	}
-
+	level.Info(logger).Log("passed 5")
 	var cp []tls.CurveID
 	for _, c := range c.CurvePreferences {
 		cp = append(cp, (tls.CurveID)(c))
